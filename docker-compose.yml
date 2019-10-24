@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+
+  mysql:
+    image: mysql:5.7
+    container_name: my_mysql
+    ports:
+      - "3336:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD:
+      TZ:
+    restart: always
+    networks:
+      mynet:
+        ipv4_address: $MYSQL_IPV4_ADDRESS
+
+  test:
+    image: test_v1:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: test
+    depends_on:
+      - mysql
+    command: --database_url="root:${MYSQL_ROOT_PASSWORD}@tcp(${MYSQL_IPV4_ADDRESS}:3306)/test_v1"
+    restart: always
+    networks:
+      - mynet
+
+volumes:
+  mysqldata:
+
+networks:
+  mynet:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.16.36.0/24"
